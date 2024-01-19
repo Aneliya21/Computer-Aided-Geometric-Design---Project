@@ -1,2 +1,2 @@
-# Computer-Aided-Geometric-Design---Project
+# Computer-Aided-Geometric-Design-Project
 Subdivision algorithm for Bezier curves.
