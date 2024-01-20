@@ -43,15 +43,42 @@
     button:hover {
       background-color: #0057e7;
     }
+
+    #sliderLabels {
+      display: flex;
+      justify-content: space-between;
+      width: 100px; /* Adjust width as needed */
+      margin-right: 20px;
+    }
+
+    #sliderValue {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
   <div id="container">
     <canvas id="bezierCanvas" width="800" height="500"></canvas>
+    
     <input type="range" id="slider" min="0" max="1" step="0.01" value="0.5" oninput="updateSlider()">
+    <div id="sliderValue">Value: 0.5</div>
   </div>
   <div style="text-align: center;">
     <button onclick="clearCanvas()">Clear Canvas</button>
+    <button onclick="deleteLastPoint()">Delete Last Point</button>
+  </div>
+
+  <div id="instructions">
+    <p>User Instructions:</p>
+    <ul>
+      <li>Click on the canvas to create control points for the Bézier curve.</li>
+      <li>Press 'Delete Last Point' to delete the last added point on the canvas.</li>
+      <li>Press 'Clear Canvas' to delete the current representation of the algorithm on the canvas.</li>
+      <li>Move the slider to the left and right to visualize how the subdivision changes based on its value.</li>
+      <li>Double-tap on a point to drag and change its current position.</li>
+    </ul>
   </div>
 
   <script>
@@ -210,7 +237,17 @@
       cancelAnimationFrame(animationId);
       animate();
     }
-    
+
+    // Function to delete the last point
+    function deleteLastPoint() {
+      if (controlPoints.length > 0) {
+        controlPoints.pop(); // Remove the last point
+        cancelAnimationFrame(animationId);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        drawBezier(context, controlPoints);
+        animate();
+      }
+    }
 
     // Function to animate the changes
     function animate() {
@@ -251,6 +288,34 @@
       cancelAnimationFrame(animationId);
       context.clearRect(0, 0, canvas.width, canvas.height);
     }
+function updateInstructions() {
+      const instructionsDiv = document.getElementById('instructions');
+      instructionsDiv.innerHTML = `
+        <p>User Instructions:</p>
+        <ul>
+          <li>Click on the canvas to create control points for the Bézier curve.</li>
+          <li>Press 'Delete Last Point' to delete the last added point on the canvas.</li>
+          <li>Press 'Clear Canvas' to delete the current representation of the algorithm on the canvas.</li>
+          <li>Move the slider to the left and right to visualize how the subdivision changes based on its value.</li>
+          <li>Double-tap on a point to drag and change its current position.</li>
+        </ul>
+      `;
+    }
+
+    // Call the function to initially set the instructions
+    updateInstructions();
+
+    function updateSlider() {
+      const slider = document.getElementById('slider');
+      const sliderValueElement = document.getElementById('sliderValue');
+      sliderValueElement.textContent = `Value: ${slider.value}`;
+      sliderValue = parseFloat(slider.value);
+      cancelAnimationFrame(animationId);
+      animate();
+    }
+
+    // Call the function to initially set the slider value
+    updateSlider();
 
   </script>
 </body>
