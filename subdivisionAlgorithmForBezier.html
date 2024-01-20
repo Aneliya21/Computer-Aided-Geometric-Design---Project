@@ -70,7 +70,6 @@
       height: 300px;
       margin-left: 20px;
       background-color: #ddd;
-      /* Background color of the slider */
       border: none;
       border-radius: 5px;
       outline: none;
@@ -80,7 +79,6 @@
       width: 20px;
       height: 18px;
       background-color: #164a9d;
-      /* Color of the slider thumb */
       border: none;
       border-radius: 50%;
       cursor: pointer;
@@ -91,7 +89,6 @@
       width: 20px;
       height: 20px;
       background-color: #164ba1;
-      /* Color of the slider thumb */
       border: none;
       border-radius: 50%;
       cursor: pointer;
@@ -115,7 +112,7 @@
   </div>
 
   <div style="margin-left: 5px; margin-top: 2px;">
-    <label for="showBezier" style="color: white; font-weight: bold; margin-right: 5px;">Show Bézier Curve:</label>
+    <label for="showBezier" style="color: rgb(0, 0, 0); font-weight: bold; margin-right: 5px;">Show Bézier Curve:</label>
     <input type="checkbox" id="showBezier" onchange="toggleBezierVisibility()" style="width: 17px; height: 17px;">
   </div>
 
@@ -123,8 +120,8 @@
     <p>User guide:</p>
     <ul>
       <li>Click on the canvas to create control points for the Bézier curve.</li>
-          <li>Move the slider to the left and right to visualize how the subdivision changes based on its value.</li>
-          <li>Hold the mouse on the last added point to drag and change its current position.</li>
+      <li>Move the slider to the left and right to visualize how the subdivision changes based on it's value.</li>
+      <li>Hold the mouse on the last added point to drag and change it's current position.</li>
     </ul>
   </div>
 
@@ -134,8 +131,8 @@
     let animationId;
     let isDragging = false;
     let draggedPoint = null;
-    let showBezier = false; // Added variable for bezier visibility
 
+    let showBezier = false; // Added variable for bezier visibility
 
     const canvas = document.getElementById('bezierCanvas');
     const context = canvas.getContext('2d');
@@ -326,9 +323,10 @@
         while (currentPoints.length > 1) {
           currentPoints = subdivideBezier(currentPoints, t);
           drawBezier(context, controlPoints, 'red');
-          drawControlPoints(context, currentPoints, 'red');
+          drawControlPoints(context, currentPoints, 'purple');
           drawLines(context, currentPoints, 'gray');
-        }
+        }    
+        drawControlPoints(context, currentPoints, 'yellow');
       }
 
       animationId = requestAnimationFrame(animate);
@@ -354,11 +352,11 @@
     function updateInstructions() {
       const instructionsDiv = document.getElementById('instructions');
       instructionsDiv.innerHTML = `
-        <p>User Instructions:</p>
+        <p>User guide:</p>
         <ul>
           <li>Click on the canvas to create control points for the Bézier curve.</li>
-          <li>Move the slider to the left and right to visualize how the subdivision changes based on its value.</li>
-          <li>Hold the mouse on the last added point to drag and change its current position.</li>
+          <li>Move the slider to the left and right to visualize how the subdivision changes based on it's value.</li>
+          <li>Hold the mouse on the last added point to drag and change it's current position.</li>
         </ul>
       `;
     }
@@ -379,5 +377,4 @@
     updateSlider();
   </script>
 </body>
-
 </html>
