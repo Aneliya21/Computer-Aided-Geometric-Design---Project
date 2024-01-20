@@ -1,2 +1,2 @@
-# Computer-Aided-Geometric-Design-Project
-Subdivision algorithm for Bezier curves.
+# Computer Aided Geometric Design (CAGD) course project.
+Web application representing 'Subdivision algorithm for Bezier curves'.
