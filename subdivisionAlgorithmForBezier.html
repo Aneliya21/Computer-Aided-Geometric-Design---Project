@@ -6,7 +6,388 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bézier Curve Subdivision</title>
   <style>
+    body {<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bézier Curve Subdivision</title>
+  <style>
     body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #b88787;
+    }
+
+    #container {
+      display: flex;
+      align-items: left;
+      justify-content: left;
+      margin-top: 20px;
+    }
+
+    canvas {
+      border: 2px solid #333;
+      background-color: #fff;
+      cursor: pointer;
+    }
+
+    input {
+      margin-left: 20px;
+    }
+
+    button {
+      margin: 10px;
+      padding: 20px 16px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: #1f5fc7;
+      color: #fff;
+      border: line;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #1f5fc7;
+    }
+
+    #sliderLabels {
+      display: flex;
+      justify-content: space-between;
+      width: 100px;
+      margin-right: 20px;
+    }
+
+    #sliderValue {
+      position: absolute;
+      top: 138px;
+      left: calc(60% + 10px);
+      font-size: 20px;
+      color: #ffffff;
+    }
+
+    #instructions {
+      color: rgb(255, 254, 254);
+    }
+
+
+    input#slider {
+      width: 300px;
+      height: 300px;
+      margin-left: 20px;
+      background-color: #ddd;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    input#slider::-webkit-slider-thumb {
+      width: 20px;
+      height: 18px;
+      background-color: #164a9d;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      margin-top: -5px;
+    }
+
+    input#slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background-color: #164ba1;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <canvas id="bezierCanvas" width="800" height="500"></canvas>
+
+    <input type="range" id="slider" min="0" max="1" step="0.01" value="0.5" oninput="updateSlider()">
+    <div id="sliderValue">Value: 0.5</div>
+
+  </div>
+  <div style="position: relative;">
+    <div style="text-align: right; margin-right: 360px; position: fixed; top: 0; right: 0">
+      <button onclick="clearCanvas()">Clear Canvas</button>
+      <button onclick="deleteLastPoint()">Delete Last Point</button>
+    </div>
+  </div>
+
+  <div style="margin-left: 5px; margin-top: 2px;">
+    <label for="showBezier" style="color: rgb(0, 0, 0); font-weight: bold; margin-right: 5px;">Show Bézier Curve:</label>
+    <input type="checkbox" id="showBezier" onchange="toggleBezierVisibility()" style="width: 17px; height: 17px;">
+  </div>
+
+  <div id="instructions">
+    <p>User guide:</p>
+    <ul>
+      <li>Click on the canvas to create control points for the Bézier curve.</li>
+      <li>Move the slider to the left and right to visualize how the subdivision changes based on it's value.</li>
+      <li>Hold the mouse on the last added point to drag and change it's current position.</li>
+    </ul>
+  </div>
+
+  <script>
+    let controlPoints = [];
+    let sliderValue = 0.5;
+    let animationId;
+    let isDragging = false;
+    let draggedPoint = null;
+
+    let showBezier = false; // Added variable for bezier visibility
+
+    const canvas = document.getElementById('bezierCanvas');
+    const context = canvas.getContext('2d');
+
+    // Function to update the slider value
+    function updateSlider() {
+      sliderValue = parseFloat(document.getElementById('slider').value);
+      cancelAnimationFrame(animationId);
+      animate();
+    }
+
+    // Function to initialize control points
+    function initializeControlPoints() {
+      // No initial points
+      controlPoints = [];
+    }
+
+    // Function to perform de Casteljau's algorithm for Bézier curve
+    function subdivideBezier(points, t) {
+      const subdividedPoints = [];
+
+      for (let i = 1; i < points.length; i++) {
+        const prevPoint = points[i - 1];
+        const currentPoint = points[i];
+
+        const interpolatedPoint = lerp(prevPoint, currentPoint, t);
+        subdividedPoints.push(interpolatedPoint);
+      }
+
+      return subdividedPoints;
+    }
+
+    // Linear interpolation function
+    function lerp(p0, p1, t) {
+      return {
+        x: p0.x + (p1.x - p0.x) * t,
+        y: p0.y + (p1.y - p0.y) * t,
+      };
+    }
+
+    // Function to draw a Bézier curve on the canvas
+    function drawBezier(context, controlPoints) {
+      if (showBezier) {
+        const n = controlPoints.length - 1;
+
+        // Function to calculate the de Casteljau point
+        function deCasteljau(t, points) {
+          const tempPoints = [...points];
+          for (let r = 1; r <= n; r++) {
+            for (let i = 0; i <= n - r; i++) {
+              tempPoints[i] = {
+                x: (1 - t) * tempPoints[i].x + t * tempPoints[i + 1].x,
+                y: (1 - t) * tempPoints[i].y + t * tempPoints[i + 1].y
+              };
+            }
+          }
+          return tempPoints[0];
+        }
+
+        // Draw the control points
+        context.fillStyle = "blue";
+        for (const point of controlPoints) {
+          context.beginPath();
+          context.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+          context.fill();
+        }
+
+        // Draw the Bezier curve
+        context.beginPath();
+        context.strokeStyle = "black";
+        context.moveTo(controlPoints[0].x, controlPoints[0].y);
+
+        const step = 0.01;
+        for (let t = step; t <= 1; t += step) {
+          const curvePoint = deCasteljau(t, controlPoints);
+          context.lineTo(curvePoint.x, curvePoint.y);
+        }
+
+        context.stroke();
+      }
+    }
+
+    // Function to draw control points
+    function drawControlPoints(context, points, color) {
+      context.fillStyle = color;
+      points.forEach(point => {
+        context.beginPath();
+        context.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+        context.fill();
+      });
+    }
+
+    function toggleBezierVisibility() {
+      showBezier = !showBezier; // Toggle the value
+      animate(); // Redraw the canvas with updated visibility
+    }
+
+    // Function to draw lines connecting points
+    function drawLines(context, points, color) {
+      context.strokeStyle = color;
+      context.beginPath();
+      context.moveTo(points[0].x, points[0].y);
+
+      for (let i = 1; i < points.length; i++) {
+        context.lineTo(points[i].x, points[i].y);
+      }
+
+      context.stroke();
+    }
+
+    // Function to handle mouse down event on the canvas
+    function handleMouseDown(event) {
+      const mouseX = event.clientX - canvas.getBoundingClientRect().left;
+      const mouseY = event.clientY - canvas.getBoundingClientRect().top;
+
+      // Check if the mouse is over a control point
+      for (const point of controlPoints) {
+        const distance = Math.sqrt((mouseX - point.x) ** 2 + (mouseY - point.y) ** 2);
+        if (distance <= 5) {
+          isDragging = true;
+          draggedPoint = point;
+          break;
+        }
+      }
+    }
+
+    // Function to handle mouse move event on the canvas
+    function handleMouseMove(event) {
+      if (isDragging && draggedPoint) {
+        draggedPoint.x = event.clientX - canvas.getBoundingClientRect().left;
+        draggedPoint.y = event.clientY - canvas.getBoundingClientRect().top;
+        cancelAnimationFrame(animationId);
+        animate();
+      }
+    }
+
+    // Function to handle mouse up event on the canvas
+    function handleMouseUp() {
+      if (isDragging) {
+        isDragging = false;
+        draggedPoint = null;
+        cancelAnimationFrame(animationId);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        drawBezier(context, controlPoints);
+        deleteLastPoint();
+        animate();
+      }
+    }
+
+    // Function to handle mouse click event on the canvas
+    function handleCanvasClick(event) {
+      const mouseX = event.clientX - canvas.getBoundingClientRect().left;
+      const mouseY = event.clientY - canvas.getBoundingClientRect().top;
+
+      // Add a new control point
+      controlPoints.push({ x: mouseX, y: mouseY });
+
+      drawBezier(context, controlPoints);
+
+      // Cancel animation and redraw
+      cancelAnimationFrame(animationId);
+      animate();
+    }
+
+    // Function to delete the last point
+    function deleteLastPoint() {
+      if (controlPoints.length > 0) {
+        controlPoints.pop(); // Remove the last point
+        cancelAnimationFrame(animationId);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        drawBezier(context, controlPoints);
+        animate();
+      }
+    }
+
+    // Function to animate the changes
+    function animate() {
+      // Draw control points and lines
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      drawControlPoints(context, controlPoints, 'blue');
+      drawLines(context, controlPoints, 'blue');
+
+      if (controlPoints.length > 1) {
+        // Subdivide the curve and draw the subdivided curves
+        const t = sliderValue;
+        let currentPoints = [...controlPoints];
+
+        while (currentPoints.length > 1) {
+          currentPoints = subdivideBezier(currentPoints, t);
+          drawBezier(context, controlPoints, 'red');
+          drawControlPoints(context, currentPoints, 'purple');
+          drawLines(context, currentPoints, 'gray');
+        }    
+        drawControlPoints(context, currentPoints, 'yellow');
+      }
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // Add event listeners for canvas interactions
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('click', handleCanvasClick);
+
+    // Initialize control points and run the example when the page is loaded
+    initializeControlPoints();
+    drawBezier(context, controlPoints);
+    animate();
+
+    function clearCanvas() {
+      controlPoints = [];
+      cancelAnimationFrame(animationId);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function updateInstructions() {
+      const instructionsDiv = document.getElementById('instructions');
+      instructionsDiv.innerHTML = `
+        <p>User guide:</p>
+        <ul>
+          <li>Click on the canvas to create control points for the Bézier curve.</li>
+          <li>Move the slider to the left and right to visualize how the subdivision changes based on it's value.</li>
+          <li>Hold the mouse on the last added point to drag and change it's current position.</li>
+        </ul>
+      `;
+    }
+
+    // Call the function to initially set the instructions
+    updateInstructions();
+
+    function updateSlider() {
+      const slider = document.getElementById('slider');
+      const sliderValueElement = document.getElementById('sliderValue');
+      sliderValueElement.textContent = `Value: ${slider.value}`;
+      sliderValue = parseFloat(slider.value);
+      cancelAnimationFrame(animationId);
+      animate();
+    }
+
+    // Call the function to initially set the slider value
+    updateSlider();
+  </script>
+</body>
+
+</html>
+
       font-family: 'Arial', sans-serif;
       margin: 0;
       padding: 0;
